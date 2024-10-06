@@ -10,12 +10,19 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import android.widget.ArrayAdapter
+import android.widget.Spinner
+import android.util.Log
+
 
 class MainActivity : AppCompatActivity() {
     private lateinit var viewModel: TransactionViewModel
     private lateinit var balanceTextView: TextView
     private lateinit var transactionsRecyclerView: RecyclerView
     private lateinit var transactionAdapter: TransactionAdapter
+
+    //list of categories are made here
+    val categories = listOf("Food","Utilities", "Entertainment", "Transaction", "Health", "Other")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,14 +83,23 @@ class MainActivity : AppCompatActivity() {
         }
 
         viewModel.transactions.observe(this) { transactions ->
+            // Log the transactions to see what's being retrieved
+            Log.d("MainActivity", "Transactions: $transactions") // Add this line
             transactionAdapter.setTransactions(transactions)
         }
     }
+
 
     private fun showAddTransactionDialog(isExpense: Boolean) {
         val dialogView = layoutInflater.inflate(R.layout.dialog_add_transaction, null)
         val amountEditText = dialogView.findViewById<TextInputEditText>(R.id.amountEditText)
         val descriptionEditText = dialogView.findViewById<TextInputEditText>(R.id.descriptionEditText)
+        val categorySpinner: Spinner = dialogView.findViewById(R.id.categorySpinner)
+
+        // Set up the category spinner
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, categories)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        categorySpinner.adapter = adapter
 
         MaterialAlertDialogBuilder(this)
             .setTitle(if (isExpense) "Add Expense" else "Add Income")
@@ -91,11 +107,13 @@ class MainActivity : AppCompatActivity() {
             .setPositiveButton("Add") { _, _ ->
                 val amount = amountEditText.text.toString().toDoubleOrNull() ?: 0.0
                 val description = descriptionEditText.text.toString()
-                viewModel.addTransaction(amount, description, isExpense)
+                val category = categorySpinner.selectedItem.toString() // Get the selected category
+                viewModel.addTransaction(amount, description, isExpense, category) // Pass the category
             }
             .setNegativeButton("Cancel", null)
             .show()
     }
+
 
     private fun showEditTransactionDialog(transaction: Transaction) {
         val dialogView = layoutInflater.inflate(R.layout.dialog_add_transaction, null)

@@ -3,42 +3,42 @@ package com.example.personalfinancemanager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
-import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.asLiveData
+import kotlinx.coroutines.flow.map
 
 class TransactionViewModel(private val repository: TransactionRepository) : ViewModel() {
 
-    val transactions: MutableLiveData<List<Transaction>> = MutableLiveData()
-    val balance: MutableLiveData<Double> = MutableLiveData()
+    // Observe all transactions from the repository
+    val transactions: LiveData<List<Transaction>> = repository.allTransactions.asLiveData()
 
-    fun addTransaction(amount: Double, description: String, isExpense: Boolean) {
-        val transaction = Transaction(amount = amount, description = description, isExpense = isExpense)
+    // Calculate balance based on transactions
+    val balance: LiveData<Double> = repository.allTransactions.map { transactions ->
+        transactions.sumOf { if (it.isExpense) -it.amount else it.amount }
+    }.asLiveData()
+
+    // Method to add a transaction
+    fun addTransaction(amount: Double, description: String, isExpense: Boolean, category: String) {
+        val transaction = Transaction(amount = amount, description = description, isExpense = isExpense, category = category, date = System.currentTimeMillis())
         viewModelScope.launch {
             repository.insert(transaction)
-            loadTransactions() // Reload transactions after adding
+            // No need to call loadTransactions() here; LiveData will auto-update
         }
     }
 
+    // Method to update a transaction
     fun updateTransaction(transaction: Transaction) {
         viewModelScope.launch {
             repository.update(transaction)
-            loadTransactions() // Reload transactions after updating
+            // No need to call loadTransactions() here; LiveData will auto-update
         }
     }
 
+    // Method to delete a transaction
     fun deleteTransaction(transaction: Transaction) {
         viewModelScope.launch {
             repository.delete(transaction)
-            loadTransactions() // Reload transactions after deleting
-        }
-    }
-
-    private fun loadTransactions() {
-        viewModelScope.launch {
-            transactions.value = repository.getAllTransactions()
-            // Update balance if necessary
-            val totalIncome = repository.getTotalIncome() ?: 0.0
-            val totalExpenses = repository.getTotalExpenses() ?: 0.0
-            balance.value = totalIncome - totalExpenses
+            // No need to call loadTransactions() here; LiveData will auto-update
         }
     }
 }

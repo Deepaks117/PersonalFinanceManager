@@ -1,44 +1,29 @@
 package com.example.personalfinancemanager
 
-import androidx.lifecycle.LiveData
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.Flow
 
 class TransactionRepository(private val transactionDao: TransactionDao) {
 
+    // Change this to return Flow
+    val allTransactions: Flow<List<Transaction>> = transactionDao.getAllTransactions()
+
     suspend fun insert(transaction: Transaction) {
-        withContext(Dispatchers.IO) {
-            transactionDao.insert(transaction)
-        }
+        transactionDao.insert(transaction)
     }
 
     suspend fun update(transaction: Transaction) {
-        withContext(Dispatchers.IO) {
-            transactionDao.update(transaction)
-        }
+        transactionDao.update(transaction)
     }
 
     suspend fun delete(transaction: Transaction) {
-        withContext(Dispatchers.IO) {
-            transactionDao.delete(transaction)
-        }
-    }
-
-    suspend fun getAllTransactions(): List<Transaction> {
-        return withContext(Dispatchers.IO) {
-            transactionDao.getAllTransactions()
-        }
+        transactionDao.delete(transaction)
     }
 
     suspend fun getTotalIncome(): Double? {
-        return withContext(Dispatchers.IO) {
-            transactionDao.getTotalIncome()
-        }
+        return transactionDao.getTotalIncome()
     }
 
     suspend fun getTotalExpenses(): Double? {
-        return withContext(Dispatchers.IO) {
-            transactionDao.getTotalExpenses()
-        }
+        return transactionDao.getTotalExpenses()
     }
 }

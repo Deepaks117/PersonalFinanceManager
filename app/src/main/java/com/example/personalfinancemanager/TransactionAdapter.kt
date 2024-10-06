@@ -35,12 +35,15 @@ class TransactionAdapter(
         private val amountTextView: TextView = itemView.findViewById(R.id.amountTextView)
         private val descriptionTextView: TextView = itemView.findViewById(R.id.descriptionTextView)
         private val dateTextView: TextView = itemView.findViewById(R.id.dateTextView)
+        private val categoryTextView: TextView = itemView.findViewById(R.id.categoryTextView)
 
-        fun bind(transaction: Transaction, onTransactionClick: (Transaction) -> Unit) { // Accept click listener
+        // Modify the bind function to accept the click listener
+        fun bind(transaction: Transaction, onTransactionClick: (Transaction) -> Unit) {
             val sign = if (transaction.isExpense) "-" else "+"
             amountTextView.text = "$sign$${String.format("%.2f", transaction.amount)}"
             descriptionTextView.text = transaction.description
             dateTextView.text = SimpleDateFormat("MM/dd/yyyy", Locale.getDefault()).format(Date(transaction.date))
+            categoryTextView.text = transaction.category
 
             amountTextView.setTextColor(
                 ContextCompat.getColor(
@@ -50,8 +53,11 @@ class TransactionAdapter(
                 )
             )
 
-            // Set the click listener
-            itemView.setOnClickListener { onTransactionClick(transaction) }
+            // Set the click listener for the entire itemView
+            itemView.setOnClickListener {
+                onTransactionClick(transaction)
+            }
         }
     }
 }
+

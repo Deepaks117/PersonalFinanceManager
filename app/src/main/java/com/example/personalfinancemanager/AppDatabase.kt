@@ -5,9 +5,8 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import android.content.Context
 
-@Database(entities = [Transaction::class], version = 1, exportSchema = false)
+@Database(entities = [Transaction::class], version = 2) // Ensure this version matches your schema version
 abstract class AppDatabase : RoomDatabase() {
-
     abstract fun transactionDao(): TransactionDao
 
     companion object {
@@ -19,11 +18,14 @@ abstract class AppDatabase : RoomDatabase() {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
-                    "personal_finance_manager_database"
-                ).build()
+                    "transaction_database"
+                )
+                    .fallbackToDestructiveMigration() // Allow destructive migration
+                    .build()
                 INSTANCE = instance
                 instance
             }
         }
     }
 }
+

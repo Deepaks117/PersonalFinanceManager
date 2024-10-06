@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import androidx.room.Delete
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TransactionDao {
@@ -19,7 +20,7 @@ interface TransactionDao {
     suspend fun delete(transaction: Transaction)
 
     @Query("SELECT * FROM transactions ORDER BY date DESC")
-    suspend fun getAllTransactions(): List<Transaction>
+    fun getAllTransactions(): Flow<List<Transaction>> // Change this to Flow
 
     @Query("SELECT SUM(amount) FROM transactions WHERE isExpense = 0")
     suspend fun getTotalIncome(): Double?
