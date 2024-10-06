@@ -6,4 +6,10 @@
     <color name="colorSecondaryVariant">#018786</color> <!-- Example secondary variant color -->
     <color name="colorOnSecondary">#000000</color> <!-- Example on secondary color (text on secondary color) -->
     <color name="white">#FFFFFF</color> <!-- Optional: white color -->
+    <color name="backgroundColor">#F5F5F7</color>
+    <color name="primaryTextColor">#1C1C1E</color>
+    <color name="secondaryTextColor">#8E8E93</color>
+    <color name="accentColor">#007AFF</color>
+    <color name="tertiaryTextColor">#A0A0A0</color> <!-- New color definition -->
+    <color name="red">#F01808</color>
 </resources>

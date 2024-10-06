@@ -41,11 +41,11 @@ android {
     }
 
     buildFeatures {
-        compose = true // If you're using Jetpack Compose, keep this; otherwise, remove it.
+        compose = true // Keep this only if using Jetpack Compose
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.1"
+        kotlinCompilerExtensionVersion = "1.5.1" // Keep only if using Compose
     }
 
     packaging {
@@ -71,6 +71,9 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
 
+    // CardView
+    implementation("androidx.cardview:cardview:1.0.0")
+
     // Room Database
     implementation("androidx.room:room-runtime:2.6.0")
     implementation("androidx.room:room-ktx:2.6.0")
@@ -84,8 +87,11 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
 
-    //RecyclerView dependency
+    // RecyclerView dependency
     implementation("androidx.recyclerview:recyclerview:1.3.0")
+
+    // Room Testing Dependencies (Optional)
+    testImplementation("androidx.room:room-testing:2.6.0")
 
     // Testing
     testImplementation(libs.junit)

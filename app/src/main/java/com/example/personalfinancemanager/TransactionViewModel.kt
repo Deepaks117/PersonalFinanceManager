@@ -1,43 +1,44 @@
 package com.example.personalfinancemanager
 
-import android.app.Application
-import androidx.lifecycle.*
-import kotlinx.coroutines.Dispatchers
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
+import androidx.lifecycle.MutableLiveData
 
-class TransactionViewModel(application: Application) : AndroidViewModel(application) {
-    private val database = AppDatabase.getDatabase(application)
-    private val transactionDao = database.transactionDao()
+class TransactionViewModel(private val repository: TransactionRepository) : ViewModel() {
 
-    private val _transactions = MutableLiveData<List<Transaction>>()
-    val transactions: LiveData<List<Transaction>> = _transactions
+    val transactions: MutableLiveData<List<Transaction>> = MutableLiveData()
+    val balance: MutableLiveData<Double> = MutableLiveData()
 
-    private val _balance = MutableLiveData<Double>()
-    val balance: LiveData<Double> = _balance
+    fun addTransaction(amount: Double, description: String, isExpense: Boolean) {
+        val transaction = Transaction(amount = amount, description = description, isExpense = isExpense)
+        viewModelScope.launch {
+            repository.insert(transaction)
+            loadTransactions() // Reload transactions after adding
+        }
+    }
 
-    init {
-        loadTransactions()
-        updateBalance()
+    fun updateTransaction(transaction: Transaction) {
+        viewModelScope.launch {
+            repository.update(transaction)
+            loadTransactions() // Reload transactions after updating
+        }
+    }
+
+    fun deleteTransaction(transaction: Transaction) {
+        viewModelScope.launch {
+            repository.delete(transaction)
+            loadTransactions() // Reload transactions after deleting
+        }
     }
 
     private fun loadTransactions() {
-        viewModelScope.launch(Dispatchers.IO) {
-            _transactions.postValue(transactionDao.getAllTransactions())
-        }
-    }
-
-    private fun updateBalance() {
-        viewModelScope.launch(Dispatchers.IO) {
-            _balance.postValue(transactionDao.getTotalBalance())
-        }
-    }
-
-    fun addTransaction(amount: Double, description: String, isExpense: Boolean) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val transaction = Transaction(amount = amount, description = description, isExpense = isExpense)
-            transactionDao.insertTransaction(transaction)
-            loadTransactions()
-            updateBalance()
+        viewModelScope.launch {
+            transactions.value = repository.getAllTransactions()
+            // Update balance if necessary
+            val totalIncome = repository.getTotalIncome() ?: 0.0
+            val totalExpenses = repository.getTotalExpenses() ?: 0.0
+            balance.value = totalIncome - totalExpenses
         }
     }
 }

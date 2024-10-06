@@ -9,7 +9,9 @@ import androidx.core.content.ContextCompat
 import java.text.SimpleDateFormat
 import java.util.*
 
-class TransactionAdapter : RecyclerView.Adapter<TransactionAdapter.TransactionViewHolder>() {
+class TransactionAdapter(
+    private val onTransactionClick: (Transaction) -> Unit // Add a click listener parameter
+) : RecyclerView.Adapter<TransactionAdapter.TransactionViewHolder>() {
 
     private var transactions: List<Transaction> = listOf()
 
@@ -24,7 +26,7 @@ class TransactionAdapter : RecyclerView.Adapter<TransactionAdapter.TransactionVi
     }
 
     override fun onBindViewHolder(holder: TransactionViewHolder, position: Int) {
-        holder.bind(transactions[position])
+        holder.bind(transactions[position], onTransactionClick) // Pass the click listener to bind
     }
 
     override fun getItemCount() = transactions.size
@@ -34,7 +36,7 @@ class TransactionAdapter : RecyclerView.Adapter<TransactionAdapter.TransactionVi
         private val descriptionTextView: TextView = itemView.findViewById(R.id.descriptionTextView)
         private val dateTextView: TextView = itemView.findViewById(R.id.dateTextView)
 
-        fun bind(transaction: Transaction) {
+        fun bind(transaction: Transaction, onTransactionClick: (Transaction) -> Unit) { // Accept click listener
             val sign = if (transaction.isExpense) "-" else "+"
             amountTextView.text = "$sign$${String.format("%.2f", transaction.amount)}"
             descriptionTextView.text = transaction.description
@@ -47,6 +49,9 @@ class TransactionAdapter : RecyclerView.Adapter<TransactionAdapter.TransactionVi
                     else android.R.color.holo_green_dark
                 )
             )
+
+            // Set the click listener
+            itemView.setOnClickListener { onTransactionClick(transaction) }
         }
     }
 }
