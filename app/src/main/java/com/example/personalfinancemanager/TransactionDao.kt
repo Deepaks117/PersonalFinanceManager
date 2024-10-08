@@ -27,4 +27,10 @@ interface TransactionDao {
 
     @Query("SELECT SUM(amount) FROM transactions WHERE isExpense = 1")
     suspend fun getTotalExpenses(): Double?
+
+    @Query("SELECT SUM(amount) FROM transactions WHERE isExpense = 1 AND category = :category")
+    suspend fun getExpensesByCategory(category: String): Double?
+
+    @Query("SELECT * FROM transactions WHERE category = :category")
+    suspend fun getTransactionsByCategory(category: String): List<Transaction>
 }

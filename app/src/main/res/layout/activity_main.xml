@@ -57,6 +57,30 @@
         app:layout_constraintStart_toEndOf="@id/addIncomeButton"
         app:layout_constraintTop_toTopOf="@id/addIncomeButton" />
 
+    <Button
+        android:id="@+id/setBudgetButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Set Budget"
+        android:layout_marginTop="16dp"
+        android:padding="12dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/addExpenseButton" />
+
+    <!-- Budget status should be placed after transaction buttons -->
+    <TextView
+        android:id="@+id/budgetStatusTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Budget Status: $0.00 remaining"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/setBudgetButton" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/transactionsRecyclerView"
         android:layout_width="0dp"
@@ -66,7 +90,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/addExpenseButton"
+        app:layout_constraintTop_toBottomOf="@id/budgetStatusTextView"
         tools:listitem="@layout/item_transaction" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton

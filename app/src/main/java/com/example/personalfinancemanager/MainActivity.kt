@@ -13,6 +13,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import android.widget.ArrayAdapter
 import android.widget.Spinner
 import android.util.Log
+import android.widget.EditText
 
 
 class MainActivity : AppCompatActivity() {
@@ -21,61 +22,82 @@ class MainActivity : AppCompatActivity() {
     private lateinit var transactionsRecyclerView: RecyclerView
     private lateinit var transactionAdapter: TransactionAdapter
 
-    //list of categories are made here
-    val categories = listOf("Food","Utilities", "Entertainment", "Transaction", "Health", "Other")
+    private val categories = listOf("Food", "Utilities", "Entertainment", "Transaction", "Health", "Other")
+
+    private var budget: Double = 5000.00 // Default budget value
+    private var totalExpenses: Double = 0.0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Initialize Room database and DAO
-        val transactionDao = AppDatabase.getDatabase(applicationContext).transactionDao()
-        val repository = TransactionRepository(transactionDao)
-        val viewModelFactory = TransactionViewModelFactory(repository)
-
-        // Initialize ViewModel using ViewModelFactory
-        viewModel = ViewModelProvider(this, viewModelFactory)[TransactionViewModel::class.java]
-
-        balanceTextView = findViewById(R.id.balanceTextView)
-        transactionsRecyclerView = findViewById(R.id.transactionsRecyclerView)
-
-        // Initialize buttons
-        val addIncomeButton: Button = findViewById(R.id.addIncomeButton)
-        val addExpenseButton: Button = findViewById(R.id.addExpenseButton)
-
-        // Set click listeners for buttons
-        addIncomeButton.setOnClickListener { showAddTransactionDialog(isExpense = false) }
-        addExpenseButton.setOnClickListener { showAddTransactionDialog(isExpense = true) }
-
-        // Initialize the Floating Action Button
-        val addTransactionFab: FloatingActionButton = findViewById(R.id.addTransactionFab)
-
-        // Set click listener for FAB
-        addTransactionFab.setOnClickListener {
-            showAddTransactionDialog(isExpense = false) // Open the dialog for adding income
-        }
-
+        setupViewModel()
+        initializeViews()
         setupRecyclerView()
         observeViewModel()
     }
 
     private fun setupViewModel() {
-        val database = AppDatabase.getDatabase(this)
-        val repository = TransactionRepository(database.transactionDao())
-        viewModel = TransactionViewModel(repository)
+        val transactionDao = AppDatabase.getDatabase(applicationContext).transactionDao()
+        val repository = TransactionRepository(transactionDao)
+        viewModel = ViewModelProvider(this, TransactionViewModelFactory(repository)).get(TransactionViewModel::class.java)
+    }
+
+    private fun initializeViews() {
+        balanceTextView = findViewById(R.id.balanceTextView)
+        transactionsRecyclerView = findViewById(R.id.transactionsRecyclerView)
+
+        findViewById<Button>(R.id.addIncomeButton).setOnClickListener { showAddTransactionDialog(false) }
+        findViewById<Button>(R.id.addExpenseButton).setOnClickListener { showAddTransactionDialog(true) }
+        findViewById<Button>(R.id.setBudgetButton).setOnClickListener { showSetBudgetDialog() }
+
+        findViewById<FloatingActionButton>(R.id.addTransactionFab).setOnClickListener {
+            showAddTransactionDialog(false) // Open the dialog for adding income
+        }
+    }
+
+    private fun updateBudgetStatus() {
+        val remainingBudget = budget - totalExpenses
+        val budgetText = if (remainingBudget >= 0) {
+            "Budget Status: $%.2f remaining".format(remainingBudget)
+        } else {
+            "Budget Status: Exceeded by $%.2f".format(Math.abs(remainingBudget))
+        }
+
+        findViewById<TextView>(R.id.budgetStatusTextView).text = budgetText
+    }
+
+    fun addExpense(amount: Double) {
+        totalExpenses += amount
+        updateBudgetStatus() // Update budget after adding an expense
+    }
+
+    private fun showSetBudgetDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_set_budget, null)
+
+        // Change this line to match the correct ID from the layout file
+        val budgetEditText = dialogView.findViewById<EditText>(R.id.editTextBudgetAmount)
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Set Budget")
+            .setView(dialogView)
+            .setPositiveButton("Set") { _, _ ->
+                val budget = budgetEditText.text.toString().toDoubleOrNull() // Use the updated ID
+                if (budget != null) {
+                    this.budget = budget // Update the budget value
+                    updateBudgetStatus() // Update the budget status display
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
 
     private fun setupRecyclerView() {
-        transactionAdapter = TransactionAdapter { transaction ->
-            showEditTransactionDialog(transaction) // Pass the transaction to edit
-        }
-        transactionsRecyclerView.apply {
-            layoutManager = LinearLayoutManager(this@MainActivity)
-            adapter = transactionAdapter
-        }
+        transactionAdapter = TransactionAdapter { transaction -> showEditTransactionDialog(transaction) }
+        transactionsRecyclerView.layoutManager = LinearLayoutManager(this)
+        transactionsRecyclerView.adapter = transactionAdapter
     }
-
 
     private fun observeViewModel() {
         viewModel.balance.observe(this) { balance ->
@@ -83,12 +105,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         viewModel.transactions.observe(this) { transactions ->
-            // Log the transactions to see what's being retrieved
-            Log.d("MainActivity", "Transactions: $transactions") // Add this line
+            Log.d("MainActivity", "Transactions: $transactions")
             transactionAdapter.setTransactions(transactions)
+            totalExpenses = transactions.filter { it.isExpense }.sumOf { it.amount } // Calculate total expenses
+            updateBudgetStatus() // Update budget after fetching transactions
         }
     }
-
 
     private fun showAddTransactionDialog(isExpense: Boolean) {
         val dialogView = layoutInflater.inflate(R.layout.dialog_add_transaction, null)
@@ -105,32 +127,55 @@ class MainActivity : AppCompatActivity() {
             .setTitle(if (isExpense) "Add Expense" else "Add Income")
             .setView(dialogView)
             .setPositiveButton("Add") { _, _ ->
-                val amount = amountEditText.text.toString().toDoubleOrNull() ?: 0.0
+                val amount = amountEditText.text.toString().toDoubleOrNull()
                 val description = descriptionEditText.text.toString()
-                val category = categorySpinner.selectedItem.toString() // Get the selected category
-                viewModel.addTransaction(amount, description, isExpense, category) // Pass the category
+                val category = categorySpinner.selectedItem.toString()
+
+                if (amount != null) {
+                    viewModel.addTransaction(amount, description, isExpense, category)
+                    if (isExpense) addExpense(amount) // Update expenses if it's an expense
+                }
             }
             .setNegativeButton("Cancel", null)
             .show()
     }
 
-
     private fun showEditTransactionDialog(transaction: Transaction) {
         val dialogView = layoutInflater.inflate(R.layout.dialog_add_transaction, null)
         val amountEditText = dialogView.findViewById<TextInputEditText>(R.id.amountEditText)
         val descriptionEditText = dialogView.findViewById<TextInputEditText>(R.id.descriptionEditText)
+        val categorySpinner: Spinner = dialogView.findViewById(R.id.categorySpinner)
 
-        // Pre-fill the dialog with current transaction data
         amountEditText.setText(transaction.amount.toString())
         descriptionEditText.setText(transaction.description)
+
+        // Set up the category spinner with existing categories
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, categories)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        categorySpinner.adapter = adapter
+
+        // Preselect the category
+        val position = categories.indexOf(transaction.category)
+        categorySpinner.setSelection(position)
 
         MaterialAlertDialogBuilder(this)
             .setTitle("Edit Transaction")
             .setView(dialogView)
             .setPositiveButton("Save") { _, _ ->
-                val amount = amountEditText.text.toString().toDoubleOrNull() ?: 0.0
+                val amount = amountEditText.text.toString().toDoubleOrNull()
                 val description = descriptionEditText.text.toString()
-                viewModel.updateTransaction(transaction.copy(amount = amount, description = description))
+                val category = categorySpinner.selectedItem.toString()
+
+                if (amount != null) {
+                    val updatedTransaction = transaction.copy(amount = amount, description = description, category = category)
+                    viewModel.updateTransaction(updatedTransaction)
+                    // Update total expenses if the transaction was an expense
+                    if (transaction.isExpense) {
+                        totalExpenses -= transaction.amount // Remove old amount
+                        totalExpenses += amount // Add new amount
+                    }
+                    updateBudgetStatus() // Update budget after editing
+                }
             }
             .setNegativeButton("Cancel", null)
             .show()

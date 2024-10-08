@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.Flow
 
 class TransactionRepository(private val transactionDao: TransactionDao) {
 
-    // Change this to return Flow
+    // Change this to return Flow for live updates
     val allTransactions: Flow<List<Transaction>> = transactionDao.getAllTransactions()
 
     suspend fun insert(transaction: Transaction) {
@@ -25,5 +25,15 @@ class TransactionRepository(private val transactionDao: TransactionDao) {
 
     suspend fun getTotalExpenses(): Double? {
         return transactionDao.getTotalExpenses()
+    }
+
+    // Method to get total expenses by category for budgeting
+    suspend fun getExpensesByCategory(category: String): Double? {
+        return transactionDao.getExpensesByCategory(category)
+    }
+
+    // Method to retrieve transactions by category
+    suspend fun getTransactionsByCategory(category: String): List<Transaction> {
+        return transactionDao.getTransactionsByCategory(category)
     }
 }
